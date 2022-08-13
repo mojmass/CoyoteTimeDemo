@@ -1,42 +1,37 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    public float Speed = 20.0f;
-    public float JumpForce = 700;
-    public GameObject Silhouette;
-    public float CoyoteTime = 0.1f;
-    private float CoyoteCounter = 0;
-    private bool Jumped = false;
+    [SerializeField] private float Speed = 20.0f;
+    [SerializeField] private float JumpForce = 700;
+    [SerializeField] private GameObject Silhouette;
+    [SerializeField] private float CoyoteTime = 0.1f;
+    public float CoyoteCounter = 0;
+    [SerializeField] private bool Jumped = false;
     private float distToGround;
-    public float distToGroundOffset = 0.1f;
+    [SerializeField] private float distToGroundOffset = 0.1f;
     private new Collider2D collider;
     private Rigidbody2D rbody;
-    private bool Wait = false;
-    private int WaitCounter = 0;
-    [SerializeField] private int WaitTimeFrames = 5;
-    private bool isFalling = false;
-
+    private bool Grounded = true;
+    private float ColExt;
     private void Awake()
     {
         collider = GetComponent<Collider2D>();
         rbody = GetComponent<Rigidbody2D>();
         distToGround = collider.bounds.extents.y + distToGroundOffset;
+        ColExt = collider.bounds.extents.x;
     }
     private bool IsGrounded()
     {
-        return Physics2D.Raycast((Vector2)transform.position , Vector2.down, distToGround);
+        return Physics2D.Raycast((Vector2)transform.position, Vector2.down, distToGround)
+            || Physics2D.Raycast((Vector2)transform.position + Vector2.left * (ColExt + 0.1f), Vector2.down, distToGround)
+            || Physics2D.Raycast((Vector2)transform.position + Vector2.right * (ColExt + 0.1f), Vector2.down, distToGround);
     }
-
-    //private void Start()
-    //{
-    //    StartCoroutine(TestMove());
-    //}
-    // Update is called once per frame
     void Update()
     {
+        //Debug.DrawRay((Vector2)transform.position + Vector2.right * (ColExt + 0.1f), Vector2.down * distToGround, Color.red);
+        //Debug.DrawRay((Vector2)transform.position + Vector2.left * (ColExt + 0.1f), Vector2.down * distToGround, Color.red);
         var dir = Input.GetAxis("Horizontal");
         if (dir != 0)
         {
@@ -51,16 +46,8 @@ public class Player : MonoBehaviour
     {
         if (!Jumped)
         {
-            if (IsGrounded())
+            if (Grounded)
             {
-                CoyoteCounter = CoyoteTime + 1.0f;
-                Wait = true;
-                Jumped = true;
-                rbody.AddForce(Vector2.up * JumpForce);
-            }
-            else if (!IsGrounded() && CoyoteCounter < CoyoteTime)
-            {
-                CoyoteCounter = CoyoteTime + 1.0f;
                 Jumped = true;
                 rbody.AddForce(Vector2.up * JumpForce);
             }
@@ -71,48 +58,37 @@ public class Player : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        if (Wait)
+        Grounded = IsGrounded();
+        if (Grounded)
         {
-            WaitCounter++;
-            if (WaitCounter == WaitTimeFrames)
-            {
-                Wait = false;
-                WaitCounter = 0;
-            }
+            CoyoteCounter = 0;
         }
         else
         {
-            if (!IsGrounded() && !Jumped)
+            if (CoyoteCounter < CoyoteTime && !Jumped)
             {
-                if (CoyoteCounter < CoyoteTime)
-                {
-                    CoyoteCounter += Time.deltaTime;
-                }
-                isFalling = true;
-            }
-            if (isFalling || Jumped)
-            {
-                if (IsGrounded())
-                {
-                    Jumped = false;
-                    isFalling = false;
-                    CoyoteCounter = 0;
-                }
+                CoyoteCounter += Time.deltaTime;
+                Grounded = true;
             }
         }
     }
-    //private IEnumerator TestMove()
-    //{
-    //    bool CanJump = true;
-    //    while (true)
-    //    {
-    //        transform.position += (Vector3)Vector2.right * Speed * Time.deltaTime;
-    //        if (transform.position.x >= -3 && CanJump)
-    //        {
-    //            CanJump = false;
-    //            Jump();
-    //        }
-    //        yield return new WaitForEndOfFrame();
-    //    }        
-    //}
+    private void Start()
+    {
+        //test
+        //StartCoroutine(TestMove());
+    }
+    private IEnumerator TestMove()
+    {
+        bool CanJump = true;
+        while (true)
+        {
+            transform.position += (Vector3)Vector2.right * Speed * Time.deltaTime;
+            if (transform.position.x >= -2.5 && CanJump)
+            {
+                CanJump = false;
+                Jump();
+            }
+            yield return new WaitForEndOfFrame();
+        }
+    }
 }
