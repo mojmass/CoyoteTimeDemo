@@ -24,8 +24,7 @@ public class Player : MonoBehaviour
     }
     private bool IsGrounded()
     {
-        return Physics2D.Raycast((Vector2)transform.position, Vector2.down, distToGround)
-            || Physics2D.Raycast((Vector2)transform.position + Vector2.left * (ColExt + 0.1f), Vector2.down, distToGround)
+        return Physics2D.Raycast((Vector2)transform.position + Vector2.left * (ColExt + 0.1f), Vector2.down, distToGround)
             || Physics2D.Raycast((Vector2)transform.position + Vector2.right * (ColExt + 0.1f), Vector2.down, distToGround);
     }
     void Update()
@@ -49,6 +48,7 @@ public class Player : MonoBehaviour
             if (Grounded)
             {
                 Jumped = true;
+                rbody.velocity *= Vector2.right;
                 rbody.AddForce(Vector2.up * JumpForce);
             }
             //test            
@@ -62,6 +62,7 @@ public class Player : MonoBehaviour
         if (Grounded)
         {
             CoyoteCounter = 0;
+            Jumped = false;
         }
         else
         {
